@@ -1,0 +1,1902 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>班级造舰 · 多级挑战（优化版）</title>
+    <style>
+        /* ===== CSS 变量 ===== */
+        :root {
+            --bg-dark: #0f1a24;
+            --bg-mid: #1a2a3a;
+            --bg-card: #1f3347;
+            --bg-input: #1b2c3a;
+            --border: #2c4458;
+            --border-light: #3a5c78;
+            --text: #e8f0f8;
+            --text-dim: #9bb8d0;
+            --text-muted: #5a7a92;
+            --accent: #f7b731;
+            --accent-dark: #b37e1a;
+            --accent-light: #ffd78a;
+            --success: #3daa6b;
+            --success-dark: #1f6a3f;
+            --danger: #b03a3a;
+            --danger-dark: #6e2323;
+            --info: #5f8db0;
+            --hot: #ff6b35;
+        }
+
+        /* ===== 基础 ===== */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(145deg, #1a2a3a 0%, #0f1a24 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 16px;
+            color: var(--text);
+        }
+        .container {
+            max-width: 960px;
+            width: 100%;
+            background: rgba(30, 45, 60, 0.85);
+            backdrop-filter: blur(4px);
+            border-radius: 40px;
+            padding: 24px 20px 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            margin-bottom: 20px;
+        }
+
+        /* ===== 登录界面 ===== */
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .login-screen h2 { font-weight: 300; font-size: 2rem; margin-bottom: 8px; color: var(--accent-light); }
+        .login-screen p { color: var(--text-dim); margin-bottom: 24px; }
+        .login-screen input {
+            width: 100%;
+            max-width: 280px;
+            padding: 14px 20px;
+            border-radius: 60px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-input);
+            color: var(--text);
+            font-size: 1.1rem;
+            text-align: center;
+            letter-spacing: 2px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .login-screen input:focus { border-color: var(--accent); box-shadow: 0 0 12px rgba(247, 183, 49, 0.15); }
+        .login-screen .btn {
+            margin-top: 16px;
+            padding: 12px 40px;
+            border: none;
+            border-radius: 60px;
+            background: var(--accent);
+            color: var(--bg-mid);
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 0 var(--accent-dark);
+            transition: all 0.2s;
+        }
+        .login-screen .btn:active { transform: translateY(2px); box-shadow: 0 2px 0 var(--accent-dark); }
+        .login-screen .error { color: #f87171; font-size: 0.9rem; margin-top: 12px; min-height: 24px; }
+        .login-features {
+            margin-top: 28px;
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .login-feature {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            max-width: 120px;
+        }
+        .login-feature .icon { font-size: 1.6rem; }
+
+        /* ===== 游戏界面 ===== */
+        .game-screen { display: none; }
+        .game-screen.active { display: block; }
+
+        /* ===== 顶部栏 ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .header .user { font-size: 0.95rem; color: var(--text-dim); display: flex; align-items: center; gap: 8px; }
+        .header .user span { color: var(--accent-light); font-weight: 600; }
+        .logout-btn {
+            background: none;
+            border: 1px solid var(--border-light);
+            color: var(--text-dim);
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .logout-btn:hover { color: var(--danger); border-color: var(--danger); }
+        .header-right { display: flex; gap: 8px; align-items: center; }
+        .streak-badge {
+            background: linear-gradient(135deg, #ff6b35, #f7b731);
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+        }
+        .timer {
+            background: var(--bg-card);
+            padding: 4px 16px;
+            border-radius: 40px;
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .timer .days { color: var(--accent); font-weight: 700; font-size: 1.2rem; }
+        .timer .days.danger { color: #f87171; animation: pulse-danger 1s infinite; }
+        @keyframes pulse-danger { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .help-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .help-btn:hover { color: var(--accent); border-color: var(--accent); }
+
+        h1 { text-align: center; font-weight: 300; font-size: 1.8rem; letter-spacing: 3px; color: var(--accent-light); margin-bottom: 4px; }
+        .ship-level {
+            text-align: center;
+            font-size: 1.2rem;
+            background: var(--bg-card);
+            border-radius: 40px;
+            padding: 6px 16px;
+            display: inline-block;
+            margin: 4px auto 8px;
+            border: 1px solid var(--accent);
+        }
+
+        /* ===== 船只展示区 ===== */
+        .ship-display {
+            background: linear-gradient(180deg, #0d1922 0%, #1a3344 60%, #1a4a6a 100%);
+            border-radius: 24px;
+            padding: 8px;
+            margin: 8px 0 12px;
+            position: relative;
+            overflow: hidden;
+            min-height: 180px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+        }
+        .ship-display svg { width: 100%; max-width: 360px; height: auto; }
+        .ship-svg { animation: bob 4s ease-in-out infinite; transition: opacity 0.5s; }
+        @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        .wave-anim { animation: wave-move 3s ease-in-out infinite; }
+        @keyframes wave-move { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-15px); } }
+        .ship-label {
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.5);
+            padding: 2px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--accent-light);
+            white-space: nowrap;
+        }
+        .build-progress-text {
+            position: absolute;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+
+        /* ===== 造船厂进度 ===== */
+        .shipyard {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            margin: 8px 0 16px;
+            flex-wrap: wrap;
+        }
+        .shipyard-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 4px 8px;
+            border-radius: 12px;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .shipyard-item.completed { background: rgba(61, 170, 107, 0.15); }
+        .shipyard-item.current { background: rgba(247, 183, 49, 0.15); box-shadow: 0 0 8px rgba(247, 183, 49, 0.1); }
+        .shipyard-item.locked { opacity: 0.3; }
+        .shipyard-item .sy-emoji { font-size: 1.4rem; }
+        .shipyard-item .sy-name { font-size: 0.6rem; color: var(--text-dim); }
+        .shipyard-item.completed .sy-name { color: var(--success); }
+        .shipyard-item.current .sy-name { color: var(--accent); font-weight: 600; }
+        .shipyard-connector { color: var(--border-light); font-size: 0.8rem; align-self: center; }
+
+        /* ===== 统计栏 ===== */
+        .stats {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px 16px;
+            background: var(--bg-card);
+            border-radius: 28px;
+            padding: 12px 18px;
+            margin: 12px 0 8px;
+            border: 1px solid var(--border);
+            justify-content: space-around;
+        }
+        .stat-item { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; }
+        .stat-item .value { font-weight: 600; font-size: 1.1rem; color: var(--accent-light); }
+        .progress-wrapper { background: var(--bg-input); border-radius: 40px; height: 8px; margin: 4px 0 18px; overflow: hidden; }
+        .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), #f5a623); transition: width 0.4s ease; border-radius: 40px; }
+
+        /* ===== 学科卡片 ===== */
+        .subjects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px;
+            margin: 16px 0 20px;
+        }
+        .subject-card {
+            background: var(--bg-card);
+            border-radius: 18px;
+            padding: 12px 4px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+            position: relative;
+            user-select: none;
+        }
+        .subject-card:hover:not(.done):not(.locked) { transform: translateY(-2px); border-color: var(--info); background: #263d55; }
+        .subject-card:active:not(.done):not(.locked) { transform: translateY(0) scale(0.96); }
+        .subject-card.done { opacity: 0.7; cursor: default; border-color: #3a6a4e; background: #1d3a2a; }
+        .subject-card.locked { opacity: 0.5; cursor: not-allowed; filter: grayscale(0.6); }
+        .subject-card .emoji { font-size: 1.8rem; display: block; margin-bottom: 2px; }
+        .subject-card .name { font-size: 0.8rem; font-weight: 500; color: #d0e2ee; }
+        .subject-card .status { font-size: 0.65rem; margin-top: 4px; color: #7a9bb3; }
+        .subject-card .lock-badge {
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            background: #5a7a92;
+            color: #fff;
+            font-size: 0.5rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 30px;
+        }
+        .card-collect-anim { animation: collect-pulse 0.4s ease; }
+        @keyframes collect-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.15); background: #3daa6b; } 100% { transform: scale(1); }
+
+        /* ===== 解锁进度 ===== */
+        .unlock-progress {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 10px 16px;
+            margin: 8px 0;
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .unlock-progress .up-label { font-size: 0.8rem; color: var(--text-dim); white-space: nowrap; }
+        .unlock-progress .up-icons { display: flex; gap: 4px; }
+        .unlock-progress .up-icon {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        .unlock-progress .up-icon.done { background: rgba(61, 170, 107, 0.3); }
+        .unlock-progress .up-icon.locked { background: rgba(90, 122, 146, 0.3); filter: grayscale(1); opacity: 0.5; }
+        .unlock-progress .up-status { font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+        .unlock-progress .up-status.locked { color: var(--text-muted); }
+        .unlock-progress .up-status.unlocked { color: var(--success); }
+
+        /* ===== 英语自主学习 ===== */
+        .english-self-study {
+            background: linear-gradient(135deg, #1f3347, #2a3a55);
+            border-radius: 20px;
+            padding: 12px 18px;
+            margin: 8px 0;
+            border: 1px solid #5f8db0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .english-self-study .ess-icon { font-size: 2rem; }
+        .english-self-study .ess-info { flex: 1; }
+        .english-self-study .ess-title { font-size: 0.9rem; font-weight: 600; color: var(--accent-light); }
+        .english-self-study .ess-desc { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+        .english-self-study .ess-btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 60px;
+            background: #5f8db0;
+            color: #fff;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 3px 0 #3a6080;
+        }
+        .english-self-study .ess-btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 #3a6080; }
+        .english-self-study .ess-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .english-self-study.done { border-color: var(--success); } }
+
+        /* ===== 按钮 ===== */
+        .actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 12px 0 8px; }
+        .btn {
+            padding: 10px 22px;
+            border: none;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.15s;
+            box-shadow: 0 4px 0 #10212e;
+            letter-spacing: 0.5px;
+        }
+        .btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 2px 0 #10212e; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .btn.primary { background: var(--accent); color: var(--bg-mid); box-shadow: 0 4px 0 var(--accent-dark); }
+        .btn.success { background: var(--success); color: #fff; box-shadow: 0 4px 0 var(--success-dark); }
+        .btn.secondary { background: #3a4b5e; box-shadow: 0 4px 0 #1d2a36; }
+        .btn.danger { background: var(--danger); color: #fff; box-shadow: 0 4px 0 var(--danger-dark); }
+        .btn.outline { background: transparent; border: 1px solid var(--border-light); color: var(--text-dim); box-shadow: none; }
+        .btn.outline:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ===== 兑换区 ===== */
+        .exchange-area {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 14px 18px;
+            margin: 12px 0 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            border: 1px solid var(--border);
+        }
+        .exchange-area .info { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
+        .exchange-area .info .fragments { font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+        .exchange-area select {
+            background: var(--bg-input);
+            color: #e0edf5;
+            border: 1px solid var(--border-light);
+            border-radius: 30px;
+            padding: 5px 12px;
+            font-size: 0.8rem;
+        }
+        .exchange-area select:disabled { opacity: 0.4; }
+
+        /* ===== 成就栏 ===== */
+        .achievements-row {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 10px 4px;
+            margin: 14px 0 6px;
+            scrollbar-width: thin;
+        }
+        .achievements-row::-webkit-scrollbar { height: 4px; }
+        .achievements-row::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+        .achievement-badge {
+            flex-shrink: 0;
+            width: 56px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 6px 4px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+            cursor: help;
+        }
+        .achievement-badge.unlocked { background: rgba(61, 170, 107, 0.12); border-color: var(--success); }
+        .achievement-badge.locked { opacity: 0.35; filter: grayscale(1); }
+        .achievement-badge .ach-emoji { font-size: 1.3rem; }
+        .achievement-badge .ach-name { font-size: 0.55rem; color: var(--text-dim); text-align: center; line-height: 1.2; }
+        .achievement-badge.unlocked .ach-name { color: var(--success); }
+
+        /* ===== 排行榜 ===== */
+        .leaderboard {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 12px 16px;
+            margin: 10px 0 0;
+            border: 1px solid var(--border);
+        }
+        .leaderboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .leaderboard-header h3 { font-size: 0.9rem; color: var(--text-dim); font-weight: 500; }
+        .leaderboard-toggle { font-size: 0.8rem; color: var(--text-muted); transition: transform 0.3s; }
+        .leaderboard.collapsed .leaderboard-toggle { transform: rotate(-90deg); }
+        .leaderboard-list { margin-top: 8px; display: none; }
+        .leaderboard:not(.collapsed) .leaderboard-list { display: block; }
+        .lb-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 4px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin: 2px 0;
+        }
+        .lb-item.me { background: rgba(247, 183, 49, 0.12); border: 1px solid var(--accent); }
+        .lb-rank { font-weight: 700; width: 28px; text-align: center; color: var(--text-muted); }
+        .lb-rank.gold { color: #ffd700; }
+        .lb-rank.silver { color: #c0c0c0; }
+        .lb-rank.bronze { color: #cd7f32; }
+        .lb-id { flex: 1; color: var(--text-dim); }
+        .lb-item.me .lb-id { color: var(--accent-light); font-weight: 600; }
+        .lb-level { color: var(--text-muted); font-size: 0.75rem; }
+
+        .footer-tip { text-align: center; font-size: 0.7rem; color: var(--text-muted); margin-top: 14px; }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--bg-mid); color: var(--text); padding: 10px 24px; border-radius: 60px;
+            font-size: 0.85rem; box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+            border: 1px solid var(--border-light); opacity: 0; transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none; z-index: 999; max-width: 90%; text-align: center;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(-4px); }
+
+        /* ===== 弹窗 ===== */
+        .overlay {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75); justify-content: center; align-items: center;
+            z-index: 1000; backdrop-filter: blur(6px);
+        }
+        .overlay.show { display: flex; animation: fade-in 0.3s; }
+        @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+        .modal {
+            background: var(--bg-card); border-radius: 40px; padding: 32px 28px;
+            max-width: 400px; width: 90%; text-align: center;
+            border: 2px solid var(--accent); box-shadow: 0 0 40px rgba(247, 183, 49, 0.15);
+            animation: modal-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        @keyframes modal-pop { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal h2 { font-size: 2.2rem; margin-bottom: 6px; color: var(--accent-light); }
+        .modal .emoji-big { font-size: 4rem; display: block; margin: 12px 0; animation: emoji-bounce 0.6s; }
+        @keyframes emoji-bounce { 0% { transform: scale(0); } 60% { transform: scale(1.3); } 100% { transform: scale(1); } }
+        .modal p { color: #b8d4e8; line-height: 1.6; }
+        .modal .modal-stats { display: flex; justify-content: center; gap: 16px; margin: 16px 0; flex-wrap: wrap; }
+        .modal .modal-stat { text-align: center; }
+        .modal .modal-stat .num { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+        .modal .modal-stat .label { font-size: 0.7rem; color: var(--text-muted); }
+        .modal .btn { margin-top: 16px; }
+        .modal .help-content { text-align: left; color: #b8d4e8; line-height: 1.8; font-size: 0.85rem; }
+        .modal .help-content li { margin: 6px 0; list-style: none; padding-left: 8px; }
+        .modal .help-content li::before { content: '▸ '; color: var(--accent); }
+
+        /* ===== 成就解锁通知 ===== */
+        .achievement-notify {
+            position: fixed; top: 20px; right: 20px;
+            background: linear-gradient(135deg, #1f3347, #2a4a60);
+            border: 2px solid var(--success);
+            border-radius: 16px;
+            padding: 12px 20px;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 8px 24px rgba(61, 170, 107, 0.3);
+            z-index: 1001;
+            transform: translateX(400px);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-width: 300px;
+        }
+        .achievement-notify.show { transform: translateX(0); }
+        .achievement-notify .an-emoji { font-size: 2rem; }
+        .achievement-notify .an-text { font-size: 0.8rem; }
+        .achievement-notify .an-title { color: var(--success); font-weight: 700; font-size: 0.7rem; }
+        .achievement-notify .an-name { color: var(--text); }
+
+        /* ===== 撒花动画 ===== */
+        .confetti-piece {
+            position: fixed; top: -10px;
+            width: 8px; height: 14px;
+            z-index: 9998;
+            animation: confetti-fall linear forwards;
+            pointer-events: none;
+        }
+        @keyframes confetti-fall {
+            to { transform: translateY(100vh) rotate(720deg); opacity: 0.3; }
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width: 600px) {
+            .subjects-grid { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+            .stats { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+            .exchange-area { flex-direction: column; align-items: stretch; }
+            .login-screen h2 { font-size: 1.6rem; }
+            .shipyard-item .sy-name { display: none; }
+            .achievement-badge { width: 48px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="app">
+    <!-- ===== 登录界面 ===== -->
+    <div id="loginScreen" class="login-screen">
+        <h2>⚓ 班级造舰计划</h2>
+        <p>输入你的学号（格式：20250101 ~ 20250136）</p>
+        <input type="text" id="studentIdInput" placeholder="20250101" maxlength="8" inputmode="numeric" />
+        <button class="btn" id="loginBtn">进入造船厂</button>
+        <div class="error" id="loginError"></div>
+        <div class="login-features">
+            <div class="login-feature"><span class="icon">🔓</span><span>语数英先完成</span></div>
+            <div class="login-feature"><span class="icon">🇬🇧</span><span>英语自主学习</span></div>
+            <div class="login-feature"><span class="icon">🚢</span><span>6级船只进化</span></div>
+            <div class="login-feature"><span class="icon">📅</span><span>14天限时挑战</span></div>
+            <div class="login-feature"><span class="icon">🏆</span><span>成就系统</span></div>
+        </div>
+        <div style="margin-top: 16px; font-size: 0.75rem; color: var(--text-muted);">⏳ 首次登录即开始14天倒计时</div>
+    </div>
+
+    <!-- ===== 游戏界面 ===== -->
+    <div id="gameScreen" class="game-screen">
+        <!-- 顶部栏 -->
+        <div class="header">
+            <div class="user">👤 <span id="displayUser">20250101</span> <button class="logout-btn" id="logoutBtn" title="退出/切换账号">退出</button></div>
+            <div class="header-right">
+                <div class="streak-badge" id="streakBadge" style="display:none;">🔥 <span id="streakCount">0</span></div>
+                <div class="timer">
+                    <span>⏳ 剩余</span>
+                    <span class="days" id="daysLeft">14</span>
+                    <span>天</span>
+                </div>
+                <button class="help-btn" id="helpBtn" title="帮助">?</button>
+            </div>
+        </div>
+
+        <h1>⚓ 刷题造舰</h1>
+        <div style="text-align:center;">
+            <span class="ship-level" id="shipLevelDisplay">当前：竹筏</span>
+        </div>
+
+        <!-- 船只展示 -->
+        <div class="ship-display" id="shipDisplay"></div>
+
+        <!-- 造船厂进度 -->
+        <div class="shipyard" id="shipyard"></div>
+
+        <!-- 统计 -->
+        <div class="stats">
+            <div class="stat-item"><span>材料</span><span class="value" id="materialCount">0</span><span style="color:var(--text-muted);" id="needCount">/5</span></div>
+            <div class="stat-item"><span>🧩 碎片</span><span class="value" id="fragmentCount">0</span></div>
+            <div class="stat-item"><span>今日</span><span class="value" id="todayCount">0</span><span style="color:var(--text-muted);">/<span id="todayLimit">6</span></span></div>
+            <div class="stat-item"><span>📅 第</span><span class="value" id="dayCount">1</span><span style="color:var(--text-muted);">天</span></div>
+            <div class="stat-item"><span>🏆 成就</span><span class="value" id="achCount">0</span><span style="color:var(--text-muted);">/8</span></div>
+        </div>
+        <div class="progress-wrapper"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+
+        <!-- 解锁进度（语数英） -->
+        <div class="unlock-progress" id="unlockProgress">
+            <span class="up-label">🔓 先完成语数英</span>
+            <div class="up-icons" id="upIcons"></div>
+            <span class="up-status locked" id="upStatus">其他科目已锁定</span>
+        </div>
+
+        <!-- 英语自主学习 -->
+        <div class="english-self-study" id="englishSelfStudy">
+            <span class="ess-icon">🇬🇧</span>
+            <div class="ess-info">
+                <div class="ess-title">英语自主学习</div>
+                <div class="ess-desc">完成自主学习，额外+1碎片奖励</div>
+            </div>
+            <button class="ess-btn" id="englishStudyBtn">去完成</button>
+        </div>
+
+        <!-- 学科卡片 -->
+        <div class="subjects-grid" id="subjectGrid"></div>
+
+        <!-- 操作按钮 -->
+        <div class="actions">
+            <button class="btn success" id="buildBtn" disabled>🚢 建造当前船只</button>
+            <button class="btn outline" id="exportBtn" style="font-size:0.75rem; padding:6px 14px;">📤 导出进度</button>
+            <button class="btn outline" id="importBtn" style="font-size:0.75rem; padding:6px 14px;">📥 导入进度</button>
+            <button class="btn danger" id="resetGameBtn" style="font-size:0.75rem; padding:6px 14px;">↺ 重置进度</button>
+        </div>
+        <input type="file" id="importFileInput" accept=".json" style="display:none;" />
+
+        <!-- 兑换区 -->
+        <div class="exchange-area">
+            <div class="info">
+                <span>🧩 万能碎片</span>
+                <span class="fragments" id="fragDisplay">0</span>
+                <span style="color:var(--text-muted); font-size:0.75rem;">（1碎片补足1个缺失学科）</span>
+            </div>
+            <div style="display:flex; gap:6px; align-items:center;">
+                <select id="exchangeSelect" disabled><option value="">— 选择缺失学科 —</option></select>
+                <button class="btn secondary" id="exchangeBtn" disabled style="padding:6px 14px; font-size:0.8rem;">补足</button>
+            </div>
+        </div>
+
+        <!-- 成就栏 -->
+        <div class="achievements-row" id="achievementsRow"></div>
+
+        <!-- 排行榜 -->
+        <div class="leaderboard collapsed" id="leaderboard">
+            <div class="leaderboard-header" id="lbHeader">
+                <h3>📊 班级排行榜</h3>
+                <div style="display:flex;gap:6px;align-items:center;">
+                    <button id="lbRefreshBtn" title="刷新排行榜" style="background:none;border:1px solid var(--border-light);color:var(--text-muted);width:24px;height:24px;border-radius:50%;font-size:0.75rem;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;">↻</button>
+                    <span class="leaderboard-toggle">▼</span>
+                </div>
+            </div>
+            <div class="leaderboard-list" id="lbList"></div>
+        </div>
+
+        <div class="footer-tip">🔓 先完成语数英解锁其他科目 · 🇬🇧英语自主学习（唯一碎片来源）· 每日最多答疑6门 · 越升级越慢 · 每日限5人登录</div>
+    </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- 结果弹窗 -->
+<div class="overlay" id="resultOverlay">
+    <div class="modal">
+        <h2 id="resultTitle">🎉 造船成功！</h2>
+        <span class="emoji-big" id="resultEmoji">⛵</span>
+        <p id="resultMsg">你已完成所有船只建造，成为航海大师！</p>
+        <div class="modal-stats" id="resultStats"></div>
+        <button class="btn primary" id="resultBtn">继续</button>
+    </div>
+</div>
+
+<!-- 帮助弹窗 -->
+<div class="overlay" id="helpOverlay">
+    <div class="modal">
+        <h2 style="font-size:1.6rem;">📖 游戏规则</h2>
+        <ul class="help-content" style="margin: 16px 0;">
+            <li>🔓 先完成语数英（顺序不限），之后自动解锁其他7门科目</li>
+            <li>🇬🇧 英语自主学习：唯一获得万能碎片的方式（每天1次）</li>
+            <li>1碎片可补足1个缺失学科（用碎片换材料）</li>
+            <li>每日最多答疑 <span id="helpDailyLimit">6</span> 门学科（不含英语自主学习）</li>
+            <li>集齐材料可建造船只，越高级所需材料越多</li>
+            <li>船只进化：竹筏→木船→铁船→蒸汽船→现代船→未来船</li>
+            <li>14天内建造所有船只即为胜利，难度随等级大幅提升</li>
+            <li>💾 点"导出进度"保存进度文件，换电脑时点"导入进度"恢复</li>
+        </ul>
+        <button class="btn primary" id="helpCloseBtn">明白了</button>
+    </div>
+</div>
+
+<!-- 成就解锁通知 -->
+<div class="achievement-notify" id="achNotify">
+    <span class="an-emoji" id="anEmoji">🏆</span>
+    <div class="an-text">
+        <div class="an-title">成就解锁！</div>
+        <div class="an-name" id="anName">初出茅庐</div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+//  配置区
+// ============================================================
+const CONFIG = {
+    SUBJECTS: [
+        { id:'chinese',    name:'语文', emoji:'📚' },
+        { id:'math',       name:'数学', emoji:'📐' },
+        { id:'english',    name:'英语', emoji:'🔤' },
+        { id:'politics',   name:'政治', emoji:'🏛️' },
+        { id:'history',    name:'历史', emoji:'📜' },
+        { id:'geography',  name:'地理', emoji:'🌍' },
+        { id:'physics',    name:'物理', emoji:'⚛️' },
+        { id:'chemistry',  name:'化学', emoji:'🧪' },
+        { id:'biology',    name:'生物', emoji:'🧬' },
+        { id:'technology', name:'技术', emoji:'💻' }
+    ],
+    CORE_IDS: ['chinese', 'math', 'english'],  // 核心科目：语数英（必须先完成，顺序不限）
+    SHIP_NAMES:  ['竹筏', '木船', '铁船', '蒸汽船', '现代船', '未来船'],
+    SHIP_EMOJIS: ['🛶',   '⛵',   '🚤',   '⛴️',     '🛳️',    '🚢'],
+    MAX_LEVEL: 5,
+    STORAGE_KEY: 'class_ship_data_v5',
+    MAX_DAYS: 14,
+    STUDENT_MIN: 1,
+    STUDENT_MAX: 36,
+    STREAK_BONUS_INTERVAL: 3,
+    // 每日最多登录名额（先到先得）
+    DAILY_LOGIN_LIMIT: 5,
+    // 难度：每级所需材料（随等级大幅提升）
+    LEVEL_NEEDS: [5, 9, 14, 20, 28],  // 总计 76，比原版 35 大幅提升
+    // 每日最多答疑科目数（不含英语自主学习）
+    DAILY_SUBJECT_LIMIT: 6,
+};
+
+const MAX_LEVEL = CONFIG.MAX_LEVEL;
+
+// ============================================================
+//  SVG 船只模板 — 每级递进式设计
+// ============================================================
+const SHIP_SVGS = [
+    // Level 0: 竹筏
+    `<g>
+        <rect x="70" y="125" width="160" height="10" rx="5" fill="#8B6914"/>
+        <rect x="70" y="135" width="160" height="10" rx="5" fill="#A07820"/>
+        <rect x="70" y="145" width="160" height="10" rx="5" fill="#8B6914"/>
+        <rect x="95" y="123" width="5" height="35" fill="#5C4510" rx="2"/>
+        <rect x="200" y="123" width="5" height="35" fill="#5C4510" rx="2"/>
+        <line x1="150" y1="125" x2="150" y2="75" stroke="#5C4510" stroke-width="2.5"/>
+        <path d="M150,75 L178,85 L150,95 Z" fill="#f7b731"/>
+    </g>`,
+    // Level 1: 木船
+    `<g>
+        <path d="M60,150 L75,118 L225,118 L240,150 Z" fill="#8B5E3C"/>
+        <path d="M60,150 L75,118 L225,118 L240,150 Z" fill="none" stroke="#6B4226" stroke-width="2"/>
+        <rect x="85" y="116" width="130" height="4" fill="#A07840" rx="2"/>
+        <line x1="150" y1="116" x2="150" y2="50" stroke="#5C4510" stroke-width="3"/>
+        <path d="M153,55 L153,108 L200,108 Z" fill="#f0e6d2" stroke="#c4b89a" stroke-width="1"/>
+        <path d="M153,55 L153,85 L180,70 Z" fill="#e8dcc0"/>
+        <path d="M150,50 L168,57 L150,64 Z" fill="#f7b731"/>
+    </g>`,
+    // Level 2: 铁船
+    `<g>
+        <path d="M50,150 L60,112 L240,112 L250,150 Z" fill="#4a5568"/>
+        <path d="M50,150 L60,112 L240,112 L250,150 Z" fill="none" stroke="#2d3748" stroke-width="2"/>
+        <rect x="60" y="110" width="180" height="4" fill="#2d3748" rx="1"/>
+        <rect x="95" y="85" width="110" height="25" fill="#5a6678" rx="3"/>
+        <rect x="105" y="92" width="12" height="10" fill="#a0d8ef" rx="2"/>
+        <rect x="125" y="92" width="12" height="10" fill="#a0d8ef" rx="2"/>
+        <rect x="165" y="92" width="12" height="10" fill="#a0d8ef" rx="2"/>
+        <rect x="185" y="92" width="12" height="10" fill="#a0d8ef" rx="2"/>
+        <rect x="143" y="62" width="14" height="24" fill="#3a4452" rx="1"/>
+        <rect x="141" y="60" width="18" height="4" fill="#2a3442" rx="1"/>
+    </g>`,
+    // Level 3: 蒸汽船
+    `<g>
+        <path d="M40,150 L52,108 L248,108 L260,150 Z" fill="#3a3a3a"/>
+        <path d="M40,150 L52,108 L248,108 L260,150 Z" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+        <rect x="52" y="106" width="196" height="4" fill="#1a1a1a" rx="1"/>
+        <rect x="85" y="78" width="130" height="28" fill="#555" rx="3"/>
+        <rect x="97" y="86" width="14" height="10" fill="#ffd966" rx="2"/>
+        <rect x="118" y="86" width="14" height="10" fill="#ffd966" rx="2"/>
+        <rect x="170" y="86" width="14" height="10" fill="#ffd966" rx="2"/>
+        <rect x="191" y="86" width="14" height="10" fill="#ffd966" rx="2"/>
+        <rect x="110" y="50" width="14" height="28" fill="#444" rx="1"/>
+        <rect x="108" y="48" width="18" height="4" fill="#222" rx="1"/>
+        <rect x="176" y="50" width="14" height="28" fill="#444" rx="1"/>
+        <rect x="174" y="48" width="18" height="4" fill="#222" rx="1"/>
+        <circle cx="117" cy="38" r="7" fill="#fff" opacity="0.35"/>
+        <circle cx="124" cy="28" r="6" fill="#fff" opacity="0.25"/>
+        <circle cx="183" cy="38" r="7" fill="#fff" opacity="0.35"/>
+        <circle cx="190" cy="28" r="6" fill="#fff" opacity="0.25"/>
+    </g>`,
+    // Level 4: 现代船
+    `<g>
+        <path d="M30,150 L48,102 L252,102 L270,150 Z" fill="#2c5282"/>
+        <path d="M30,150 L48,102 L252,102 L270,150 Z" fill="none" stroke="#1a365d" stroke-width="2"/>
+        <rect x="48" y="100" width="204" height="3" fill="#1a365d" rx="1"/>
+        <rect x="75" y="72" width="150" height="28" fill="#4a7ba8" rx="4"/>
+        <rect x="95" y="50" width="110" height="22" fill="#5a8bb8" rx="4"/>
+        <rect x="85" y="80" width="10" height="8" fill="#a0d8ef" rx="1"/>
+        <rect x="100" y="80" width="10" height="8" fill="#a0d8ef" rx="1"/>
+        <rect x="115" y="80" width="10" height="8" fill="#a0d8ef" rx="1"/>
+        <rect x="175" y="80" width="10" height="8" fill="#a0d8ef" rx="1"/>
+        <rect x="190" y="80" width="10" height="8" fill="#a0d8ef" rx="1"/>
+        <rect x="205" y="80" width="10" height="8" fill="#a0d8ef" rx="1"/>
+        <rect x="105" y="56" width="10" height="7" fill="#a0d8ef" rx="1"/>
+        <rect x="120" y="56" width="10" height="7" fill="#a0d8ef" rx="1"/>
+        <rect x="170" y="56" width="10" height="7" fill="#a0d8ef" rx="1"/>
+        <rect x="185" y="56" width="10" height="7" fill="#a0d8ef" rx="1"/>
+        <ellipse cx="150" cy="46" rx="14" ry="6" fill="#e2e8f0"/>
+        <line x1="150" y1="46" x2="150" y2="38" stroke="#a0aec0" stroke-width="2"/>
+        <circle cx="150" cy="36" r="2" fill="#e53e3e"/>
+    </g>`,
+    // Level 5: 未来船
+    `<g>
+        <path d="M25,150 L45,98 L255,98 L275,150 Z" fill="#1a1a2e"/>
+        <rect x="45" y="100" width="210" height="2" fill="#00d4ff" opacity="0.8"/>
+        <path d="M70,72 L230,72 L218,98 L82,98 Z" fill="#16213e"/>
+        <path d="M95,50 L205,50 L193,72 L107,72 Z" fill="#0f3460"/>
+        <rect x="82" y="78" width="136" height="3" fill="#00d4ff" opacity="0.5" rx="1"/>
+        <rect x="102" y="56" width="96" height="3" fill="#00d4ff" opacity="0.5" rx="1"/>
+        <line x1="150" y1="50" x2="150" y2="25" stroke="#00d4ff" stroke-width="2"/>
+        <circle cx="150" cy="22" r="5" fill="#00d4ff" opacity="0.9">
+            <animate attributeName="r" values="4;6;4" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        <ellipse cx="262" cy="128" rx="10" ry="14" fill="#00d4ff" opacity="0.3">
+            <animate attributeName="opacity" values="0.2;0.5;0.2" dur="1.5s" repeatCount="indefinite"/>
+        </ellipse>
+        <ellipse cx="38" cy="128" rx="6" ry="10" fill="#00d4ff" opacity="0.2"/>
+    </g>`
+];
+
+function getShipSVG(level, opacity) {
+    opacity = opacity !== undefined ? opacity : 1;
+    const safeLevel = Math.min(Math.max(level, 0), MAX_LEVEL);
+    return `<svg viewBox="0 0 300 200" class="ship-svg" style="opacity:${opacity}">
+        <defs>
+            <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#2a5f8a"/>
+                <stop offset="100%" stop-color="#1a3a5a"/>
+            </linearGradient>
+        </defs>
+        <rect x="0" y="155" width="300" height="45" fill="url(#waterGrad)"/>
+        <path class="wave-anim" d="M-20,155 Q55,148 130,155 T280,155 T320,155" stroke="#5fa8d3" stroke-width="2" fill="none" opacity="0.4"/>
+        <path class="wave-anim" d="M-20,162 Q55,156 130,162 T280,162 T320,162" stroke="#4a8ab3" stroke-width="1.5" fill="none" opacity="0.3" style="animation-delay: 0.5s;"/>
+        ${SHIP_SVGS[safeLevel] || SHIP_SVGS[0]}
+    </svg>`;
+}
+
+// ============================================================
+//  成就定义
+// ============================================================
+const ACHIEVEMENTS = [
+    { id:'first_ship',   name:'初出茅庐', desc:'建造第一艘船',         emoji:'🚀', check: d => d.level >= 1 || d.won },
+    { id:'three_ships',  name:'稳扎稳打', desc:'建造3艘船',           emoji:'⚓', check: d => d.level >= 3 || d.won },
+    { id:'master',       name:'航海大师', desc:'建造所有船只',         emoji:'👑', check: d => d.won },
+    { id:'english_3',    name:'英语之星', desc:'英语自主学习3次',    emoji:'🇬🇧', check: d => (d.stats && d.stats.englishStudyCount || 0) >= 3 },
+    { id:'streak_7',     name:'坚持不懈', desc:'连续打卡7天',        emoji:'📅', check: d => (d.stats && d.stats.maxStreak || 0) >= 7 },
+    { id:'frag_master',  name:'碎片大师', desc:'累计获得8个碎片',    emoji:'🧩', check: d => (d.fragments || 0) >= 8 || (d.stats && d.stats.totalFragmentsEarned || 0) >= 8 },
+    { id:'perfect_day',  name:'核心突破', desc:'完成语数英（3门核心）',  emoji:'🔓', check: d => CONFIG.CORE_IDS.every(id => (d.materials || []).includes(id)) },
+    { id:'speed_star',   name:'速度之星', desc:'10天内完成所有建造',  emoji:'⚡', check: d => d.won && getDaysElapsed(d.startDate) <= 10 },
+];
+
+// ============================================================
+//  状态管理
+// ============================================================
+function getDefaultState() {
+    const now = new Date().toDateString();
+    return {
+        level: 0,
+        materials: [],
+        fragments: 0,
+        todayDone: [],
+        todayDate: now,
+        dayCount: 1,
+        won: false,
+        failed: false,
+        hotSubjects: generateHotSubjects(),
+        startDate: now,
+        englishStudyDone: false,                  // 今日英语自主学习是否完成
+        // 新增字段
+        streak: 0,
+        lastCheckIn: null,
+        achievements: [],
+        stats: {
+            hotCollected: 0,
+            fragmentsUsed: 0,
+            maxStreak: 0,
+            maxDailyDone: 0,
+            totalCheckIns: 0,
+            totalBuilds: 0,
+            englishStudyCount: 0,    // 英语自主学习累计次数
+            totalFragmentsEarned: 0, // 累计获得碎片数
+        }
+    };
+}
+
+function generateHotSubjects() {
+    const shuffled = [...CONFIG.SUBJECTS].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 3).map(s => s.id);
+}
+
+// 检查核心科目（语数英）是否全部完成（含今日已答疑）
+function areCoreSubjectsDone(data) {
+    const doneSet = new Set([...data.materials, ...data.todayDone]);
+    return CONFIG.CORE_IDS.every(id => doneSet.has(id));
+}
+
+function loadUserData(userId) {
+    try {
+        const all = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEY) || '{}');
+        if (!all[userId]) {
+            all[userId] = getDefaultState();
+            localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(all));
+            return all[userId];
+        }
+        // 数据迁移 & 兼容
+        const data = all[userId];
+        if (!data.materials) data.materials = [];
+        if (!data.fragments) data.fragments = 0;
+        if (!data.todayDone) data.todayDone = [];
+        if (!data.hotSubjects || data.hotSubjects.length === 0) data.hotSubjects = generateHotSubjects();
+        if (data.level === undefined) data.level = 0;
+        if (!data.achievements) data.achievements = [];
+        if (!data.stats) data.stats = { hotCollected:0, fragmentsUsed:0, maxStreak:0, maxDailyDone:0, totalCheckIns:0, totalBuilds:0, englishStudyCount:0, totalFragmentsEarned:0 };
+        if (data.englishStudyCount === undefined) data.englishStudyCount = 0;
+        if (data.stats && data.stats.totalFragmentsEarned === undefined) data.stats.totalFragmentsEarned = 0;
+        if (data.streak === undefined) data.streak = 0;
+        if (data.lastCheckIn === undefined) data.lastCheckIn = null;
+        if (!data.startDate) data.startDate = new Date().toDateString();
+        if (data.englishStudyDone === undefined) data.englishStudyDone = false;
+        return data;
+    } catch (e) {
+        console.error('数据加载失败，重置:', e);
+        return getDefaultState();
+    }
+}
+
+function saveUserData(userId, data) {
+    try {
+        const all = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEY) || '{}');
+        all[userId] = data;
+        localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(all));
+    } catch (e) {
+        console.error('数据保存失败:', e);
+        showToast('⚠️ 数据保存失败，请检查存储空间');
+    }
+}
+
+// ============================================================
+//  日期工具
+// ============================================================
+function getDaysElapsed(start) {
+    return Math.floor((new Date() - new Date(start)) / (1000*60*60*24));
+}
+function getRemainingDays(start) {
+    return Math.max(0, CONFIG.MAX_DAYS - getDaysElapsed(start));
+}
+function getYesterdayString() {
+    return new Date(Date.now() - 86400000).toDateString();
+}
+
+// ============================================================
+//  游戏逻辑 (纯函数)
+// ============================================================
+function getNeedCount(level) {
+    return CONFIG.LEVEL_NEEDS[level] || 5;
+}
+
+function isLevelComplete(data) {
+    return data.materials.length >= getNeedCount(data.level);
+}
+
+function isAllComplete(data) {
+    return data.level >= MAX_LEVEL && data.won;
+}
+
+function getCurrentShipName(level) {
+    if (level <= MAX_LEVEL) return CONFIG.SHIP_NAMES[level];
+    return '🏆 全部完成';
+}
+
+function getNextShipName(level) {
+    if (level < MAX_LEVEL) return CONFIG.SHIP_NAMES[level + 1];
+    return null;
+}
+
+// 跨天检测 — 自动重置每日状态
+function checkDayReset(data) {
+    const now = new Date().toDateString();
+    if (data.todayDate !== now) {
+        // 记录昨日最高每日打卡数
+        if (data.stats) {
+            data.stats.maxDailyDone = Math.max(data.stats.maxDailyDone || 0, data.todayDone.length);
+        }
+        data.todayDone = [];
+        data.todayDate = now;
+        data.hotSubjects = generateHotSubjects();
+        data.englishStudyDone = false;                   // 重置英语自主学习
+        if (!data.won && !data.failed) {
+            data.dayCount = (data.dayCount || 0) + 1;
+        }
+        return true;
+    }
+    return false;
+}
+
+// 超时检测
+function updateTimeStatus(data) {
+    if (data.won) return 'won';
+    if (data.failed) return 'failed';
+    const remaining = getRemainingDays(data.startDate);
+    if (remaining <= 0) {
+        data.failed = true;
+        return 'failed';
+    }
+    return 'ok';
+}
+
+// 连续打卡更新
+function updateStreak(data) {
+    const today = new Date().toDateString();
+    if (data.lastCheckIn === today) return null; // 今天已打卡
+
+    if (data.lastCheckIn === getYesterdayString()) {
+        data.streak = (data.streak || 0) + 1;
+    } else {
+        data.streak = 1;
+    }
+    data.lastCheckIn = today;
+    if (data.stats) {
+        data.stats.maxStreak = Math.max(data.stats.maxStreak || 0, data.streak);
+    }
+
+    // 连续打卡不再奖励碎片（仅记录连续天数）
+    return 'normal';
+}
+
+// 成就检测
+function checkAchievements(data) {
+    const newlyUnlocked = [];
+    ACHIEVEMENTS.forEach(ach => {
+        if (!data.achievements.includes(ach.id)) {
+            try {
+                if (ach.check(data)) {
+                    data.achievements.push(ach.id);
+                    newlyUnlocked.push(ach);
+                }
+            } catch (e) { /* 忽略检测错误 */ }
+        }
+    });
+    return newlyUnlocked;
+}
+
+// ============================================================
+//  音效管理 (Web Audio API)
+// ============================================================
+const AudioManager = {
+    ctx: null,
+    enabled: true,
+    init() {
+        if (!this.ctx) {
+            try {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) { this.enabled = false; }
+        }
+    },
+    play(freq, duration, type) {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+        duration = duration || 0.1;
+        type = type || 'sine';
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.08, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + duration);
+        } catch (e) { /* 忽略 */ }
+    },
+    collect()  { this.play(523, 0.1); },
+    hot()      { this.play(659, 0.08); setTimeout(() => this.play(880, 0.12), 80); },
+    build()    { this.play(523, 0.1); setTimeout(() => this.play(659, 0.1), 100); setTimeout(() => this.play(784, 0.2), 200); },
+    achievement() { this.play(659, 0.1); setTimeout(() => this.play(784, 0.1), 100); setTimeout(() => this.play(1047, 0.25), 200); },
+    error()    { this.play(200, 0.15, 'square'); },
+    win()      { [523, 659, 784, 1047].forEach((f, i) => setTimeout(() => this.play(f, 0.2), i * 120)); },
+};
+
+// ============================================================
+//  撒花动画
+// ============================================================
+function createConfetti(count) {
+    count = count || 60;
+    const colors = ['#f7b731', '#3daa6b', '#5f8db0', '#ffd78a', '#e8f0f8', '#ff6b35'];
+    for (let i = 0; i < count; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'confetti-piece';
+        piece.style.left = Math.random() * 100 + '%';
+        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.animationDelay = Math.random() * 0.5 + 's';
+        piece.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+        piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+        if (Math.random() > 0.5) { piece.style.width = '6px'; piece.style.height = '6px'; piece.style.borderRadius = '50%'; }
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 4000);
+    }
+}
+
+// ============================================================
+//  排行榜 (读取 localStorage 真实数据)
+// ============================================================
+function getLeaderboard(currentUserId, currentData) {
+    const all = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEY) || '{}');
+    const students = [];
+
+    for (let i = CONFIG.STUDENT_MIN; i <= CONFIG.STUDENT_MAX; i++) {
+        const id = '202501' + String(i).padStart(2, '0');
+        if (all[id]) {
+            // 真实数据
+            const d = all[id];
+            students.push({
+                id: id,
+                level: d.level || 0,
+                materials: (d.materials || []).length,
+                isUser: id === currentUserId,
+                won: !!d.won,
+                failed: !!d.failed,
+            });
+        } else {
+            // 尚未登录过的学号：显示未开始
+            students.push({
+                id: id,
+                level: 0,
+                materials: 0,
+                isUser: false,
+                won: false,
+                failed: false,
+                notStarted: true,
+            });
+        }
+    }
+
+    // 排序：已通关 > 等级高 > 材料多
+    students.sort((a, b) => {
+        if (a.won && !b.won) return -1;
+        if (!a.won && b.won) return 1;
+        if (a.failed && !b.failed) return 1;
+        if (!a.failed && b.failed) return -1;
+        return b.level - a.level || b.materials - a.materials;
+    });
+
+    const userRank = students.findIndex(s => s.isUser) + 1;
+    const topN = students.slice(0, 5);
+    if (userRank > 5) {
+        // 确保当前用户可见
+        const userItem = students[userRank - 1];
+        if (!topN.find(s => s.isUser)) topN.push(userItem);
+    }
+    return { top: topN, userRank: userRank, total: CONFIG.STUDENT_MAX };
+}
+
+// 排行榜刷新动画
+let lbRefreshing = false;
+function refreshLeaderboard(userId, data) {
+    if (lbRefreshing) return;
+    lbRefreshing = true;
+    const list = document.getElementById('lbList');
+    list.style.transition = 'opacity 0.2s';
+    list.style.opacity = '0.3';
+    setTimeout(() => {
+        renderLeaderboard(userId, data);
+        list.style.opacity = '1';
+        lbRefreshing = false;
+        // 刷新按钮旋转动画
+        const btn = document.getElementById('lbRefreshBtn');
+        if (btn) {
+            btn.style.transform = 'rotate(360deg)';
+            btn.style.transition = 'transform 0.4s';
+            setTimeout(() => { btn.style.transform = ''; }, 400);
+        }
+    }, 300);
+}
+
+// ============================================================
+//  核心操作
+// ============================================================
+let currentUser = '';
+
+function doSubject(userId, subjectId) {
+    let data = loadUserData(userId);
+    if (data.won) { showToast('已通关 🎉'); return; }
+    if (data.failed) { showToast('任务已失败，请重置'); return; }
+    if (data.todayDone.includes(subjectId)) { showToast('今天已答疑过该科目 📆'); AudioManager.error(); return; }
+    if (data.materials.includes(subjectId)) { showToast('该材料已收集'); AudioManager.error(); return; }
+
+    // 🔒 解锁检测：非核心科目需要先完成语数英
+    const isCore = CONFIG.CORE_IDS.includes(subjectId);
+    if (!isCore && !areCoreSubjectsDone(data)) {
+        showToast('🔒 请先完成语数英（语文、数学、英语）后再来！');
+        AudioManager.error();
+        return;
+    }
+
+    // 每日答疑次数上限（不含英语自主学习）
+    const todaySubjectCount = data.todayDone.filter(x => x !== '__required_bonus__').length;
+    if (todaySubjectCount >= CONFIG.DAILY_SUBJECT_LIMIT) {
+        showToast(`今日答疑已达上限（${CONFIG.DAILY_SUBJECT_LIMIT}门），明天再来！`);
+        AudioManager.error();
+        return;
+    }
+
+    // 执行答疑
+    data.materials.push(subjectId);
+    data.todayDone.push(subjectId);
+    if (data.stats) {
+        data.stats.totalCheckIns = (data.stats.totalCheckIns || 0) + 1;
+        data.stats.maxDailyDone = Math.max(data.stats.maxDailyDone || 0, data.todayDone.length);
+    }
+
+    let extra = '';
+    let isHot = data.hotSubjects.includes(subjectId);
+    if (isHot) {
+        extra = ' 🔥 热门学科！';
+        AudioManager.collect();
+    } else {
+        AudioManager.collect();
+    }
+
+    // 连续打卡
+    updateStreak(data);
+    if (data.streak > 0) {
+        document.getElementById('streakBadge').style.display = 'flex';
+        document.getElementById('streakCount').textContent = data.streak;
+    }
+
+    // 成就检测
+    const newAchs = checkAchievements(data);
+
+    saveUserData(userId, data);
+    render(userId);
+
+    showToast(`✅ 获得「${CONFIG.SUBJECTS.find(s => s.id === subjectId).name}」材料！${extra}`);
+    newAchs.forEach(ach => showAchievementNotify(ach));
+}
+
+function useFragment(userId, targetId) {
+    let data = loadUserData(userId);
+    if (data.won) { showToast('已通关'); return; }
+    if (data.failed) { showToast('任务已失败'); return; }
+    if (data.fragments < 1) { showToast('碎片不足，无法补足'); AudioManager.error(); return; }
+    if (data.materials.includes(targetId)) { showToast('该学科已收集'); return; }
+
+    data.materials.push(targetId);
+    data.fragments -= 1;
+    if (data.stats) data.stats.fragmentsUsed = (data.stats.fragmentsUsed || 0) + 1;
+
+    const newAchs = checkAchievements(data);
+    saveUserData(userId, data);
+    render(userId);
+    AudioManager.collect();
+    showToast(`🧩 用1碎片补足了「${CONFIG.SUBJECTS.find(s => s.id === targetId).name}」！`);
+    newAchs.forEach(ach => showAchievementNotify(ach));
+}
+
+// 英语自主学习
+function doEnglishSelfStudy(userId) {
+    let data = loadUserData(userId);
+    if (data.won) { showToast('已通关 🎉'); return; }
+    if (data.failed) { showToast('任务已失败，请重置'); return; }
+    if (data.englishStudyDone) { showToast('今日英语自主学习已完成 ✅'); AudioManager.error(); return; }
+
+    data.fragments += 1;
+    data.englishStudyDone = true;
+    if (data.stats) {
+        data.stats.englishStudyCount = (data.stats.englishStudyCount || 0) + 1;
+        data.stats.totalFragmentsEarned = (data.stats.totalFragmentsEarned || 0) + 1;
+    }
+    AudioManager.hot();
+
+    const newAchs = checkAchievements(data);
+    saveUserData(userId, data);
+    render(userId);
+    showToast('🇬🇧 英语自主学习完成！+1碎片');
+    newAchs.forEach(ach => showAchievementNotify(ach));
+}
+
+// ============================================================
+//  导出 / 导入进度
+// ============================================================
+function exportData(userId) {
+    const data = loadUserData(userId);
+    const payload = {
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        userId: userId,
+        data: data,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `造舰进度_${userId}_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+    showToast('📤 进度已导出！可复制此文件到其他电脑导入');
+}
+
+function importData(userId, file) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const payload = JSON.parse(e.target.result);
+            if (!payload.data || !payload.userId) {
+                showToast('❌ 文件格式不正确，无法导入');
+                return;
+            }
+            const all = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEY) || '{}');
+            const oldData = all[userId] || getDefaultState();
+            const newData = payload.data;
+            const merged = {
+                ...oldData,
+                level: Math.max(oldData.level || 0, newData.level || 0),
+                materials: [...new Set([...(oldData.materials || []), ...(newData.materials || [])])],
+                fragments: Math.max(oldData.fragments || 0, newData.fragments || 0),
+                achievements: [...new Set([...(oldData.achievements || []), ...(newData.achievements || [])])],
+                stats: {
+                    ...(oldData.stats || {}),
+                    ...(newData.stats || {}),
+                    totalCheckIns: Math.max(oldData.stats?.totalCheckIns || 0, newData.stats?.totalCheckIns || 0),
+                    totalBuilds: Math.max(oldData.stats?.totalBuilds || 0, newData.stats?.totalBuilds || 0),
+                    maxStreak: Math.max(oldData.stats?.maxStreak || 0, newData.stats?.maxStreak || 0),
+                }
+            };
+            all[userId] = merged;
+            localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(all));
+            render(userId);
+            showToast(`📥 进度已导入！合并自 ${payload.userId}`);
+        } catch (err) {
+            showToast('❌ 文件解析失败：' + err.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+// 退出/切换账号
+function logout() {
+    currentUser = '';
+    document.getElementById('gameScreen').classList.remove('active');
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('studentIdInput').value = '';
+    document.getElementById('loginError').textContent = '';
+}
+
+function buildShip(userId) {
+    let data = loadUserData(userId);
+    if (data.won) { showToast('已通关'); return; }
+    if (data.failed) { showToast('任务已失败'); return; }
+    if (!isLevelComplete(data)) { showToast('材料不足，无法建造'); AudioManager.error(); return; }
+
+    AudioManager.build();
+    createConfetti(60);
+
+    // 升级
+    data.level += 1;
+    data.materials = [];
+    if (data.stats) data.stats.totalBuilds = (data.stats.totalBuilds || 0) + 1;
+
+    // 检查是否通关（到达最高级即胜利）
+    if (data.level >= MAX_LEVEL) {
+        data.won = true;
+        saveUserData(userId, data);
+        const newAchs = checkAchievements(data);
+        render(userId);
+        setTimeout(() => {
+            AudioManager.win();
+            createConfetti(100);
+            showResultModal('win', data);
+        }, 500);
+        newAchs.forEach(ach => showAchievementNotify(ach));
+        return;
+    }
+
+    const newAchs = checkAchievements(data);
+    saveUserData(userId, data);
+    render(userId);
+    showToast(`🚢 建造成功！当前船只：${getCurrentShipName(data.level)}`);
+    newAchs.forEach(ach => showAchievementNotify(ach));
+}
+
+function resetUser(userId) {
+    if (!confirm('确定重置当前账号所有进度吗？此操作不可撤销。')) return;
+    try {
+        const all = JSON.parse(localStorage.getItem(CONFIG.STORAGE_KEY) || '{}');
+        all[userId] = getDefaultState();
+        localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(all));
+        // 强制重新读取并渲染
+        const data = loadUserData(userId);
+        document.getElementById('streakBadge').style.display = 'none';
+        document.getElementById('resultOverlay').classList.remove('show');
+        render(userId);
+        showToast('已重置，重新开始');
+    } catch(e) {
+        console.error('重置失败:', e);
+        showToast('⚠️ 重置失败，请重试');
+    }
+}
+
+// ============================================================
+//  弹窗 & 通知
+// ============================================================
+function showResultModal(type, data) {
+    const overlay = document.getElementById('resultOverlay');
+    const title = document.getElementById('resultTitle');
+    const emoji = document.getElementById('resultEmoji');
+    const msg = document.getElementById('resultMsg');
+    const btn = document.getElementById('resultBtn');
+    const statsDiv = document.getElementById('resultStats');
+
+    if (type === 'win') {
+        title.textContent = '🎉 航海大师！';
+        emoji.textContent = '🚢';
+        const daysUsed = getDaysElapsed(data.startDate);
+        msg.textContent = `恭喜！你用 ${daysUsed} 天建造了所有船只，成为真正的航海大师！`;
+        statsDiv.innerHTML = `
+            <div class="modal-stat"><div class="num">${daysUsed}</div><div class="label">所用天数</div></div>
+            <div class="modal-stat"><div class="num">${data.stats.totalCheckIns || 0}</div><div class="label">总打卡次数</div></div>
+            <div class="modal-stat"><div class="num">${data.stats.maxStreak || 0}</div><div class="label">最长连续</div></div>
+            <div class="modal-stat"><div class="num">${data.achievements.length}</div><div class="label">成就解锁</div></div>
+        `;
+        btn.textContent = '继续航行';
+        btn.onclick = () => { overlay.classList.remove('show'); render(currentUser); };
+    } else if (type === 'fail') {
+        title.textContent = '⏰ 任务失败';
+        emoji.textContent = '💔';
+        msg.textContent = `14天期限已到，未能完成所有船只。不要气馁，重新挑战吧！`;
+        statsDiv.innerHTML = `
+            <div class="modal-stat"><div class="num">${data.level}</div><div class="label">达到等级</div></div>
+            <div class="modal-stat"><div class="num">${data.stats.totalCheckIns || 0}</div><div class="label">总打卡次数</div></div>
+        `;
+        btn.textContent = '重新挑战';
+        btn.onclick = () => { overlay.classList.remove('show'); resetUser(currentUser); };
+    }
+    overlay.classList.add('show');
+}
+
+let achNotifyTimeout;
+function showAchievementNotify(ach) {
+    const notify = document.getElementById('achNotify');
+    document.getElementById('anEmoji').textContent = ach.emoji;
+    document.getElementById('anName').textContent = ach.name;
+    notify.classList.add('show');
+    AudioManager.achievement();
+    clearTimeout(achNotifyTimeout);
+    achNotifyTimeout = setTimeout(() => notify.classList.remove('show'), 3500);
+}
+
+// ============================================================
+//  渲染
+// ============================================================
+function render(userId) {
+    currentUser = userId;
+    let data = loadUserData(userId);
+
+    checkDayReset(data);
+    const status = updateTimeStatus(data);
+    saveUserData(userId, data);
+
+    if (status === 'failed') {
+        showResultModal('fail', data);
+        return;
+    }
+
+    const need = getNeedCount(data.level);
+    const collected = data.materials.length;
+    const progress = Math.min(1, collected / need);
+
+    // 基础信息
+    document.getElementById('displayUser').textContent = userId;
+    document.getElementById('materialCount').textContent = collected;
+    document.getElementById('needCount').textContent = '/' + need;
+    document.getElementById('fragmentCount').textContent = data.fragments;
+    document.getElementById('fragDisplay').textContent = data.fragments;
+    document.getElementById('todayCount').textContent = data.todayDone.filter(x => x !== '__required_bonus__').length;
+    document.getElementById('todayLimit').textContent = CONFIG.DAILY_SUBJECT_LIMIT;
+    document.getElementById('dayCount').textContent = data.dayCount;
+    document.getElementById('achCount').textContent = data.achievements.length;
+
+    // 连续打卡徽章
+    const streakBadge = document.getElementById('streakBadge');
+    if (data.streak > 0) {
+        streakBadge.style.display = 'flex';
+        document.getElementById('streakCount').textContent = data.streak;
+    } else {
+        streakBadge.style.display = 'none';
+    }
+
+    // 船只等级显示
+    const shipName = getCurrentShipName(data.level);
+    const nextName = getNextShipName(data.level);
+    let levelText = `当前：${shipName}`;
+    if (data.won) {
+        levelText = `🏆 ${shipName}（已通关）`;
+    } else if (nextName) {
+        levelText = `当前：${shipName} → ${nextName}`;
+    } else {
+        levelText = `当前：${shipName}（满级）`;
+    }
+    document.getElementById('shipLevelDisplay').textContent = levelText;
+
+    // 剩余天数
+    const remaining = getRemainingDays(data.startDate);
+    const daysEl = document.getElementById('daysLeft');
+    daysEl.textContent = remaining;
+    daysEl.className = 'days' + (remaining <= 3 ? ' danger' : '');
+
+    // 进度条
+    document.getElementById('progressBar').style.width = (progress * 100) + '%';
+
+    // 解锁进度（语数英）— 同时统计 materials 和今日已答疑
+    const doneSet = new Set([...data.materials, ...data.todayDone]);
+    const coreDone = CONFIG.CORE_IDS.filter(id => doneSet.has(id)).length;
+    const coreTotal = CONFIG.CORE_IDS.length;
+    const coreUnlocked = coreDone >= coreTotal;
+    const upIcons = document.getElementById('upIcons');
+    upIcons.innerHTML = '';
+    CONFIG.CORE_IDS.forEach(id => {
+        const s = CONFIG.SUBJECTS.find(s => s.id === id);
+        const icon = document.createElement('span');
+        icon.className = 'up-icon' + (doneSet.has(id) ? ' done' : ' locked');
+        icon.textContent = s.emoji;
+        icon.title = s.name + (data.materials.includes(id) ? ' ✅' : '');
+        upIcons.appendChild(icon);
+    });
+    const upStatus = document.getElementById('upStatus');
+    if (coreUnlocked) {
+        upStatus.textContent = '其他科目已解锁 ✅';
+        upStatus.className = 'up-status unlocked';
+    } else {
+        upStatus.textContent = `其他科目已锁定（${coreDone}/${coreTotal}）`;
+        upStatus.className = 'up-status locked';
+    }
+
+    // 英语自主学习按钮状态
+    const essBtn = document.getElementById('englishStudyBtn');
+    const essDiv = document.getElementById('englishSelfStudy');
+    if (data.englishStudyDone) {
+        essBtn.textContent = '✅ 已完成';
+        essBtn.disabled = true;
+        essDiv.classList.add('done');
+    } else if (data.won || data.failed) {
+        essBtn.textContent = data.won ? '🏆 已通关' : '💔 已失败';
+        essBtn.disabled = true;
+        essDiv.classList.remove('done');
+    } else {
+        essBtn.textContent = '去完成';
+        essBtn.disabled = false;
+        essDiv.classList.remove('done');
+    }
+
+    // 船只 SVG 展示
+    const shipDisplay = document.getElementById('shipDisplay');
+    if (data.won) {
+        shipDisplay.innerHTML = getShipSVG(MAX_LEVEL, 1) + '<div class="ship-label">🏆 未来船 — 通关！</div>';
+    } else if (data.failed) {
+        shipDisplay.innerHTML = getShipSVG(data.level, 0.3) + '<div class="ship-label">💔 任务失败</div>';
+    } else {
+        const shipOpacity = 0.3 + 0.7 * progress;
+        const label = progress >= 1 ? '✅ 材料集齐，点击建造！' : `建造进度 ${collected}/${need}`;
+        shipDisplay.innerHTML = getShipSVG(data.level, shipOpacity) +
+            `<div class="ship-label">${CONFIG.SHIP_EMOJIS[data.level]} ${shipName}</div>` +
+            `<div class="build-progress-text">${label}</div>`;
+    }
+
+    // 造船厂进度
+    const shipyard = document.getElementById('shipyard');
+    shipyard.innerHTML = '';
+    for (let i = 0; i <= MAX_LEVEL; i++) {
+        const item = document.createElement('div');
+        item.className = 'shipyard-item';
+        if (i < data.level || data.won) item.classList.add('completed');
+        else if (i === data.level && !data.won) item.classList.add('current');
+        else item.classList.add('locked');
+        item.innerHTML = `<span class="sy-emoji">${CONFIG.SHIP_EMOJIS[i]}</span><span class="sy-name">${CONFIG.SHIP_NAMES[i]}</span>`;
+        item.title = CONFIG.SHIP_NAMES[i] + (i < data.level || data.won ? ' ✅' : i === data.level ? ' 🔨' : ' 🔒');
+        shipyard.appendChild(item);
+        if (i < MAX_LEVEL) {
+            const conn = document.createElement('span');
+            conn.className = 'shipyard-connector';
+            conn.textContent = '→';
+            shipyard.appendChild(conn);
+        }
+    }
+
+    // 学科卡片
+    const grid = document.getElementById('subjectGrid');
+    grid.innerHTML = '';
+    const isLocked = data.won || data.failed;
+    CONFIG.SUBJECTS.forEach(sub => {
+        const card = document.createElement('div');
+        card.className = 'subject-card';
+        const hasMaterial = data.materials.includes(sub.id);
+        const isCore = CONFIG.CORE_IDS.includes(sub.id);
+        const isLockedSubject = !isCore && !coreUnlocked;
+        if (hasMaterial) card.classList.add('done');
+        if (isLocked || (isLockedSubject && !hasMaterial)) card.classList.add('locked');
+        if (data.hotSubjects.includes(sub.id) && !hasMaterial && !isLocked) {
+            card.classList.add('hot');
+            const badge = document.createElement('span');
+            badge.className = 'hot-badge';
+            badge.textContent = '🔥';
+            card.appendChild(badge);
+        }
+        // 锁定徽章（非核心科目 + 核心未完成）
+        if (isLockedSubject && !hasMaterial) {
+            const lockBadge = document.createElement('span');
+            lockBadge.className = 'lock-badge';
+            lockBadge.textContent = '🔒';
+            card.appendChild(lockBadge);
+        }
+        const statusText = hasMaterial ? '✅ 已收集' : (data.todayDone.includes(sub.id) ? '☑️ 今日已答疑' : (isLockedSubject ? '🔒 未完成语数英' : '⏳ 待答疑'));
+        card.innerHTML += `
+            <span class="emoji">${sub.emoji}</span>
+            <div class="name">${sub.name}</div>
+            <div class="status">${statusText}</div>
+        `;
+        if (!hasMaterial && !data.todayDone.includes(sub.id) && !isLocked && !isLockedSubject) {
+            card.addEventListener('click', () => doSubject(userId, sub.id));
+        }
+        grid.appendChild(card);
+    });
+
+    // 兑换下拉
+    const select = document.getElementById('exchangeSelect');
+    const missing = CONFIG.SUBJECTS.filter(s => !data.materials.includes(s.id));
+    select.innerHTML = '<option value="">— 选择 —</option>';
+    missing.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${s.emoji} ${s.name}`;
+        select.appendChild(opt);
+    });
+    const canExchange = data.fragments >= 1 && missing.length > 0 && !isLocked;
+    select.disabled = !canExchange;
+    document.getElementById('exchangeBtn').disabled = !canExchange;
+
+    // 建造按钮
+    const buildBtn = document.getElementById('buildBtn');
+    if (data.won) {
+        buildBtn.textContent = '⛵ 已通关';
+        buildBtn.disabled = true;
+    } else if (data.failed) {
+        buildBtn.textContent = '💔 任务失败';
+        buildBtn.disabled = true;
+    } else {
+        const canBuild = isLevelComplete(data);
+        buildBtn.textContent = canBuild ? '🚢 建造当前船只' : `🚢 建造（需${need}材料）`;
+        buildBtn.disabled = !canBuild;
+    }
+
+    // 成就栏
+    const achRow = document.getElementById('achievementsRow');
+    achRow.innerHTML = '';
+    ACHIEVEMENTS.forEach(ach => {
+        const unlocked = data.achievements.includes(ach.id);
+        const badge = document.createElement('div');
+        badge.className = 'achievement-badge ' + (unlocked ? 'unlocked' : 'locked');
+        badge.innerHTML = `<span class="ach-emoji">${ach.emoji}</span><span class="ach-name">${ach.name}</span>`;
+        badge.title = `${ach.name}：${ach.desc}${unlocked ? ' ✅' : ' 🔒'}`;
+        achRow.appendChild(badge);
+    });
+
+    // 排行榜（实时读取真实数据）
+    refreshLeaderboard(userId, data);
+}
+
+function renderLeaderboard(userId, data) {
+    const lb = getLeaderboard(userId, data);
+    const list = document.getElementById('lbList');
+    list.innerHTML = '';
+    lb.top.forEach((s, idx) => {
+        const rank = lb.top.findIndex(x => x === s) + 1;
+        const actualRank = s.isUser ? lb.userRank : rank;
+        const item = document.createElement('div');
+        item.className = 'lb-item' + (s.isUser ? ' me' : '');
+        let rankClass = '';
+        if (actualRank === 1) rankClass = 'gold';
+        else if (actualRank === 2) rankClass = 'silver';
+        else if (actualRank === 3) rankClass = 'bronze';
+        const shipEmoji = s.won ? '🏆' : (s.notStarted ? '💤' : CONFIG.SHIP_EMOJIS[s.level]);
+        const levelText = s.notStarted ? '未开始' : `Lv.${s.level}${s.won ? ' ✅' : ''}`;
+        item.innerHTML = `
+            <span class="lb-rank ${rankClass}">${actualRank > 5 && s.isUser ? lb.userRank : actualRank}</span>
+            <span class="lb-id">${s.id}${s.isUser ? '（我）' : ''}</span>
+            <span class="lb-level">${shipEmoji} ${levelText}</span>
+        `;
+        list.appendChild(item);
+    });
+    if (lb.userRank > 5) {
+        const sep = document.createElement('div');
+        sep.style.cssText = 'text-align:center;color:var(--text-muted);font-size:0.7rem;padding:2px;';
+        sep.textContent = '···';
+        list.appendChild(sep);
+    }
+}
+
+// ============================================================
+//  Toast
+// ============================================================
+let toastTimeout;
+function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ============================================================
+//  每日登录名额管理（每天限前5名）
+// ============================================================
+function checkDailyLoginLimit(userId) {
+    const today = new Date().toDateString();
+    const key = CONFIG.STORAGE_KEY + '_dailyLogins';
+    let dailyLogins = {};
+    try {
+        dailyLogins = JSON.parse(localStorage.getItem(key) || '{}');
+    } catch(e) { dailyLogins = {}; }
+
+    // 清理过期数据（只保留今天）
+    Object.keys(dailyLogins).forEach(date => {
+        if (date !== today) delete dailyLogins[date];
+    });
+
+    if (!dailyLogins[today]) dailyLogins[today] = [];
+
+    const todayList = dailyLogins[today];
+
+    // 如果已在列表中，允许登录
+    if (todayList.includes(userId)) return { allowed: true, count: todayList.length };
+
+    // 如果未满5人，允许登录并加入列表
+    if (todayList.length < CONFIG.DAILY_LOGIN_LIMIT) {
+        todayList.push(userId);
+        try {
+            localStorage.setItem(key, JSON.stringify(dailyLogins));
+        } catch(e) {}
+        return { allowed: true, count: todayList.length };
+    }
+
+    // 已满5人，拒绝登录
+    return { allowed: false, count: todayList.length, list: todayList };
+}
+
+// ============================================================
+//  登录
+// ============================================================
+function login() {
+    const input = document.getElementById('studentIdInput');
+    const id = input.value.trim();
+    const errorEl = document.getElementById('loginError');
+    const min = CONFIG.STUDENT_MIN, max = CONFIG.STUDENT_MAX;
+    const regex = new RegExp(`^202501(0[1-9]|[1-2][0-9]|3[0-${max % 10}])$`);
+    if (!regex.test(id)) {
+        errorEl.textContent = `❌ 请输入正确的学号（20250101 ~ 20250${max}）`;
+        AudioManager.error();
+        return;
+    }
+
+    // 检查每日登录名额
+    const loginCheck = checkDailyLoginLimit(id);
+    if (!loginCheck.allowed) {
+        errorEl.textContent = `⏳ 今日登录名额已满（${CONFIG.DAILY_LOGIN_LIMIT}人），请明天再来！`;
+        AudioManager.error();
+        return;
+    }
+
+    errorEl.textContent = '';
+    currentUser = id;
+    let data = loadUserData(id);
+    if (!data.startDate) {
+        data.startDate = new Date().toDateString();
+        saveUserData(id, data);
+    }
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('gameScreen').classList.add('active');
+    render(id);
+    if (data.won) showResultModal('win', data);
+    else if (data.failed) showResultModal('fail', data);
+}
+
+// ============================================================
+//  初始化
+// ============================================================
+// 设置帮助弹窗中的每日上限
+document.getElementById('helpDailyLimit').textContent = CONFIG.DAILY_SUBJECT_LIMIT;
+
+document.getElementById('loginBtn').addEventListener('click', login);
+document.getElementById('studentIdInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') login(); });
+
+document.getElementById('buildBtn').addEventListener('click', () => { if (currentUser) buildShip(currentUser); });
+document.getElementById('exchangeBtn').addEventListener('click', () => {
+    if (!currentUser) return;
+    const target = document.getElementById('exchangeSelect').value;
+    if (!target) { showToast('请选择要补足的学科'); return; }
+    useFragment(currentUser, target);
+});
+document.getElementById('resetGameBtn').addEventListener('click', () => { if (currentUser) resetUser(currentUser); });
+document.getElementById('logoutBtn').addEventListener('click', () => { logout(); });
+document.getElementById('englishStudyBtn').addEventListener('click', () => { if (currentUser) doEnglishSelfStudy(currentUser); });
+
+// 导出 / 导入进度
+document.getElementById('exportBtn').addEventListener('click', () => { if (currentUser) exportData(currentUser); });
+document.getElementById('importBtn').addEventListener('click', () => {
+    if (!currentUser) { showToast('请先登录'); return; }
+    document.getElementById('importFileInput').click();
+});
+document.getElementById('importFileInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    importData(currentUser, file);
+    e.target.value = '';  // 允许重复导入同一文件
+});
+
+// 排行榜折叠 & 刷新
+document.getElementById('lbHeader').addEventListener('click', (e) => {
+    // 只有点击 header（不是刷新按钮）才切换折叠
+    if (e.target.id === 'lbRefreshBtn') return;
+    document.getElementById('leaderboard').classList.toggle('collapsed');
+});
+document.getElementById('lbRefreshBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (currentUser) {
+        const data = loadUserData(currentUser);
+        refreshLeaderboard(currentUser, data);
+        showToast('📊 排行榜已刷新');
+    }
+});
+
+// 帮助弹窗
+document.getElementById('helpBtn').addEventListener('click', () => {
+    document.getElementById('helpOverlay').classList.add('show');
+});
+document.getElementById('helpCloseBtn').addEventListener('click', () => {
+    document.getElementById('helpOverlay').classList.remove('show');
+});
+document.getElementById('helpOverlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('show');
+});
+
+// 弹窗背景点击
+document.getElementById('resultOverlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('show');
+});
+
+// 键盘快捷键: B = 建造
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'b' || e.key === 'B') {
+        const btn = document.getElementById('buildBtn');
+        if (!btn.disabled && document.getElementById('gameScreen').classList.contains('active')) {
+            buildShip(currentUser);
+        }
+    }
+});
+</script>
+</body>
+</html>
